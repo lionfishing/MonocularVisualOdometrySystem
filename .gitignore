@@ -1,0 +1,14 @@
+# CMake build output
+build/
+out/
+
+# Visual Studio
+.vs/
+
+# user-specific files
+*.user
+
+# Generated binaries
+*.exe
+*.obj
+*.pdb
