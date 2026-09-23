@@ -2,6 +2,6 @@
 
 int main()
 {
-    std::cout << "project 3 envirment is ready" << '\n';
+    std::cout << "Project 3 environment is ready." << '\n';
     return 0;
 }
