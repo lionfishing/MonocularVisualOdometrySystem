@@ -6,8 +6,8 @@ camera motion estimation, and visual odometry.
 ## Current status
 
 - [x] Minimal CMake project
-- [ ] OpenCV integration
-- [ ] Image loading
+- [x] OpenCV integration
+- [x] Image loading
 - [ ] ORB feature extraction
 - [ ] Feature matching
 - [ ] Essential matrix estimation
