@@ -12,3 +12,6 @@ out/
 *.exe
 *.obj
 *.pdb
+
+# Local CMake settings
+CMakeUserPresets.json
