@@ -1,40 +1,69 @@
 #include <iostream>
 #include <string>
+#include <vector>
 
 #include <opencv2/core.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
+#include <opencv2/features2d.hpp>
 
 void printImageInfo(const std::string& name, const cv::Mat& image);
 
 int main(int argc, char* argv[])
 {
-    if (argc != 2)
+    if (argc != 3)
     {
         std::cerr << "Usage: project_3_vo <image_path>\n";
         return 1;
     }
-    const std::string image_path = argv[1];
-    const cv::Mat image = cv::imread(image_path, cv::IMREAD_COLOR);
-    if (image.empty())
+    
+    const cv::Mat image2 = cv::imread(argv[1], cv::IMREAD_GRAYSCALE);
+    const cv::Mat image3 = cv::imread(argv[2], cv::IMREAD_GRAYSCALE);
+
+    if (image2.empty())
     {
-        std::cerr << "Failed to load image: " << image_path << '\n';
+        std::cerr << "Failed to load image: " << argv[1] << '\n';
         return 2;
     }
+    if (image3.empty())
+    {
+        std::cerr << "Failed to load image: " << argv[2] << '\n';
+        return 2;
+    }
+    const cv::Ptr<cv::ORB> orb = cv::ORB::create(1000);
 
-    cv::Mat gray_image;
-    cv::cvtColor(image, gray_image, cv::COLOR_BGR2GRAY);
-    const cv::Rect roi_rect(image.cols / 4, image.rows / 4, image.cols / 2, image.rows / 2);
-    const cv::Mat roi = image(roi_rect);
-    const cv::Mat roi_copy = roi.clone();
+    std::vector<cv::KeyPoint> keypoints2;
+    std::vector<cv::KeyPoint> keypoints3;
 
-    printImageInfo("ROI image", roi);
-    printImageInfo("ROI copy", roi_copy);
+    cv::Mat descriptors2;
+    cv::Mat descriptors3;
 
-    cv::imshow("Input image", image);
-    cv::imshow("Grayscale image", gray_image);
-    cv::imshow("ROI image", roi);
+    orb->detectAndCompute(image2, cv::noArray(), keypoints2, descriptors2);
+    orb->detectAndCompute(image3, cv::noArray(), keypoints3, descriptors3);
+
+    if (descriptors2.empty())
+    {
+        std::cerr << "Failed to compute descriptors for image 1.\n";
+        return 4;
+    }
+
+    if (descriptors3.empty())
+    {
+        std::cerr << "Failed to compute descriptors for image 2.\n";
+        return 5;
+    }
+
+    cv::Mat keypoints_view2;
+    cv::Mat keypoints_view3;
+
+    cv::drawKeypoints(image2, keypoints2, keypoints_view2, cv::Scalar::all(-1), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
+    cv::drawKeypoints(image3, keypoints3, keypoints_view3, cv::Scalar::all(-1), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
+
+    cv::imshow("Image 2 keypoints", keypoints_view2);
+    cv::imshow("Image 3 keypoints", keypoints_view3);
+    cv::waitKey(0);
+    
     cv::waitKey(0);
 
     return 0;

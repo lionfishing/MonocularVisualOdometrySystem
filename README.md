@@ -8,7 +8,7 @@ camera motion estimation, and visual odometry.
 - [x] Minimal CMake project
 - [x] OpenCV integration
 - [x] Image loading
-- [ ] ORB feature extraction
+- [x] Two-frame ORB feature extraction and visualization
 - [ ] Feature matching
 - [ ] Essential matrix estimation
 - [ ] Relative pose recovery
@@ -18,3 +18,12 @@ camera motion estimation, and visual odometry.
 - Visual Studio 2026
 - CMake
 - C++17
+
+## Run
+
+Pass two consecutive image frames to the executable:
+
+```powershell
+out/build/local-debug/project_3_vo.exe data/img1.jpg data/img2.jpg
+```
+
