@@ -8,13 +8,12 @@
 #include <opencv2/imgproc.hpp>
 #include <opencv2/features2d.hpp>
 
-void printImageInfo(const std::string& name, const cv::Mat& image);
-
 int main(int argc, char* argv[])
 {
     if (argc != 3)
     {
-        std::cerr << "Usage: project_3_vo <image1_path> <image2_path>\n";
+        std::cerr
+            << "Usage: project_3_vo <image1_path> <image2_path>\n";
         return 1;
     }
     
@@ -28,7 +27,7 @@ int main(int argc, char* argv[])
     }
     if (image2.empty())
     {
-        std::cerr << "Failed to load image: " << argv[1] << '\n';
+        std::cerr << "Failed to load image: " << argv[2] << '\n';
         return 3;
     }
     const cv::Ptr<cv::ORB> orb = cv::ORB::create(1000);
@@ -50,7 +49,7 @@ int main(int argc, char* argv[])
 
     if (descriptors2.empty())
     {
-        std::cerr << "Failed to compute descriptors for image 1.\n";
+        std::cerr << "Failed to compute descriptors for image 2.\n";
         return 5;
     }
 
@@ -62,12 +61,14 @@ int main(int argc, char* argv[])
         keypoints1, 
         keypoints_view1, 
         cv::Scalar::all(-1), 
-        cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
+        cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS
+    );
     cv::drawKeypoints(
         image2, keypoints2, 
         keypoints_view2, 
         cv::Scalar::all(-1), 
-        cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
+        cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS
+    );
 
     std::cout << "Image 1 keypoints: "
         << keypoints1.size() << '\n';
