@@ -8,6 +8,13 @@ add_executable(project_3_vo src/main.cpp)
 
 target_compile_features(project_3_vo PRIVATE cxx_std_17)
 
+if(MSVC)
+    target_compile_options(project_3_vo
+        PRIVATE
+        /utf-8
+    )
+endif()
+
 target_include_directories(project_3_vo PRIVATE ${OpenCV_INCLUDE_DIRS})
 
 target_link_libraries(project_3_vo PRIVATE ${OpenCV_LIBS})

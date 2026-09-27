@@ -52,64 +52,53 @@ int main(int argc, char* argv[])
         return 5;
     }
 
-    cv::Mat keypoints_view1;
-    cv::Mat keypoints_view2;
-
-    cv::drawKeypoints(
-        image1, 
-        keypoints1, 
-        keypoints_view1, 
-        cv::Scalar::all(-1), 
-        cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS
-    );
-    cv::drawKeypoints(
-        image2, 
-        keypoints2,      
-        keypoints_view2, 
-        cv::Scalar::all(-1), 
-        cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS
-    );
-
-    std::cout << "Image 1 keypoints: "
-        << keypoints1.size() << '\n';
-
-    std::cout << "Image 2 keypoints: "
-        << keypoints2.size() << '\n';
-
-    std::cout << "Descriptors 1: "
-        << descriptors1.rows << " x "
-        << descriptors1.cols << '\n';
-
-    std::cout << "Descriptors 2: "
-        << descriptors2.rows << " x "
-        << descriptors2.cols << '\n';
-
-    std::cout << "Descriptor type: "
-        << descriptors1.type() << '\n';
-
-    std::cout << "Bytes per descriptor: "
-        << descriptors1.cols * descriptors1.elemSize()
-        << '\n';
-
     /*描述子一致性是局部外观约束，不是几何正确性的证明。*/
-    cv::BFMatcher matcher(cv::NORM_HAMMING, false);
+    cv::BFMatcher matcher(
+        cv::NORM_HAMMING, 
+        false
+    );
+    cv::BFMatcher cross_check_matcher(
+        cv::NORM_HAMMING,
+        true
+    );
     std::vector<cv::DMatch> matches;
+    std::vector<cv::DMatch> cross_check_matches;
+
     matcher.match(
         descriptors1,
         descriptors2,
         matches
+    );
+    cross_check_matcher.match(
+        descriptors1,
+        descriptors2,
+        cross_check_matches
     );
     if (matches.empty())
     {
         std::cerr << "No descriptor matches were found.\n";
         return 6;
     }
+    if (cross_check_matches.empty())
+    {
+        std::cerr << "No cross-check matches were found.\n";
+        return 7;
+    }
+
     std::cout << "Raw matches: "
         << matches.size() << '\n';
 
     std::sort(
         matches.begin(),
         matches.end(),
+        [](const cv::DMatch& lhs, const cv::DMatch& rhs)
+        {
+            return lhs.distance < rhs.distance;
+        }
+    );
+    std::sort(
+        cross_check_matches.begin(),
+        cross_check_matches.end(),
         [](const cv::DMatch& lhs, const cv::DMatch& rhs)
         {
             return lhs.distance < rhs.distance;
@@ -132,11 +121,28 @@ int main(int argc, char* argv[])
     std::cout << "Mean distance: "
         << mean_distance << '\n';
 
+    std::cout << "Cross-check matches: "
+        << cross_check_matches.size() << '\n';
+
+    std::cout << "Cross-check retention rate: "
+        << 100.0 * static_cast<double>(cross_check_matches.size())
+        / static_cast<double>(matches.size())
+        << "%\n";
+
     const std::size_t match_count_to_draw =
         std::min<std::size_t>(100, matches.size());
     const std::vector<cv::DMatch> selected_matches(
         matches.begin(),
         matches.begin() + match_count_to_draw
+    );
+    const std::size_t cross_check_count_to_draw =
+        std::min<std::size_t>(
+            100,
+            cross_check_matches.size()
+        );
+    const std::vector<cv::DMatch> selected_cross_check_matches(
+        cross_check_matches.begin(),
+        cross_check_matches.begin() + cross_check_count_to_draw
     );
 
     cv::Mat matches_view;
@@ -152,12 +158,23 @@ int main(int argc, char* argv[])
         std::vector<char>(),
         cv::DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS
     );
+    cv::Mat cross_check_view;
+    cv::drawMatches(
+        image1,
+        keypoints1,
+        image2,
+        keypoints2,
+        selected_cross_check_matches,
+        cross_check_view,
+        cv::Scalar::all(-1),
+        cv::Scalar::all(-1),
+        std::vector<char>(),
+        cv::DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS
+    );
 
-    cv::imshow("Image 1 keypoints", keypoints_view1);
-    cv::imshow("Image 2 keypoints", keypoints_view2);
     cv::imshow("Selected ORB matches", matches_view);
+    cv::imshow("Cross-check ORB matches", cross_check_view);
 
     cv::waitKey(0);
-
     return 0;
 }

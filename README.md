@@ -9,7 +9,11 @@ camera motion estimation, and visual odometry.
 - [x] OpenCV integration
 - [x] Image loading
 - [x] Two-frame ORB feature extraction and visualization
-- [ ] Feature matching
+- [x] Feature matching
+- [x] Raw brute-force descriptor matching
+- [x] Cross-check matching
+- [ ] KNN ratio-test matching
+- [ ] Geometric verification
 - [ ] Essential matrix estimation
 - [ ] Relative pose recovery
 
