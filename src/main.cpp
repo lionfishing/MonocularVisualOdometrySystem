@@ -1,11 +1,10 @@
 #include <iostream>
-#include <string>
 #include <vector>
+#include <algorithm>
 
 #include <opencv2/core.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgcodecs.hpp>
-#include <opencv2/imgproc.hpp>
 #include <opencv2/features2d.hpp>
 
 int main(int argc, char* argv[])
@@ -64,7 +63,8 @@ int main(int argc, char* argv[])
         cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS
     );
     cv::drawKeypoints(
-        image2, keypoints2, 
+        image2, 
+        keypoints2,      
         keypoints_view2, 
         cv::Scalar::all(-1), 
         cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS
@@ -91,9 +91,72 @@ int main(int argc, char* argv[])
         << descriptors1.cols * descriptors1.elemSize()
         << '\n';
 
+    /*描述子一致性是局部外观约束，不是几何正确性的证明。*/
+    cv::BFMatcher matcher(cv::NORM_HAMMING, false);
+    std::vector<cv::DMatch> matches;
+    matcher.match(
+        descriptors1,
+        descriptors2,
+        matches
+    );
+    if (matches.empty())
+    {
+        std::cerr << "No descriptor matches were found.\n";
+        return 6;
+    }
+    std::cout << "Raw matches: "
+        << matches.size() << '\n';
+
+    std::sort(
+        matches.begin(),
+        matches.end(),
+        [](const cv::DMatch& lhs, const cv::DMatch& rhs)
+        {
+            return lhs.distance < rhs.distance;
+        }
+    );
+    double distance_sum = 0.0;
+    for (const cv::DMatch& match : matches)
+    {
+        distance_sum += match.distance;
+    }
+    const double mean_distance =
+        distance_sum / static_cast<double>(matches.size());
+
+    std::cout << "Minimum distance: "
+        << matches.front().distance << '\n';
+
+    std::cout << "Maximum distance: "
+        << matches.back().distance << '\n';
+
+    std::cout << "Mean distance: "
+        << mean_distance << '\n';
+
+    const std::size_t match_count_to_draw =
+        std::min<std::size_t>(100, matches.size());
+    const std::vector<cv::DMatch> selected_matches(
+        matches.begin(),
+        matches.begin() + match_count_to_draw
+    );
+
+    cv::Mat matches_view;
+    cv::drawMatches(
+        image1,
+        keypoints1,
+        image2,
+        keypoints2,
+        selected_matches,
+        matches_view,
+        cv::Scalar::all(-1),
+        cv::Scalar::all(-1),
+        std::vector<char>(),
+        cv::DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS
+    );
 
     cv::imshow("Image 1 keypoints", keypoints_view1);
     cv::imshow("Image 2 keypoints", keypoints_view2);
+    cv::imshow("Selected ORB matches", matches_view);
+
     cv::waitKey(0);
 
     return 0;
