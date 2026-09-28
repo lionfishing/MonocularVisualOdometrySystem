@@ -9,6 +9,7 @@
 
 #include "feature.h"
 #include "matching.h"
+#include "geometry.h"
 
 constexpr float kRatioThreshold = 0.75F;
 constexpr int kMaxFeatures = 1000;
@@ -78,6 +79,29 @@ int main(int argc, char* argv[])
         }
     );
 
+    const vo::PointCorrespondences correspondences =
+        vo::buildPointCorrespondences(
+            features1.keypoints,
+            features2.keypoints,
+            ratio_matches
+        );
+
+    if (correspondences.points1.size()
+        != correspondences.points2.size())
+    {
+        std::cerr << "Point correspondence sizes do not match.\n";
+        return 7;
+    }
+    if (correspondences.points1.size() < 8)
+    {
+        std::cerr
+            << "Not enough point correspondences "
+            << "for fundamental matrix estimation.\n";//minmum of four parts of points
+        return 8;
+    }
+    std::cout << "Point correspondences: "
+        << correspondences.points1.size() << '\n';
+
     const std::size_t ratio_count_to_draw =
         std::min<std::size_t>(
             100,
@@ -101,6 +125,8 @@ int main(int argc, char* argv[])
         std::vector<char>(),
         cv::DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS
     );
+
+
 
     cv::imshow("Ratio-test ORB matches", ratio_view);
 
