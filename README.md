@@ -13,7 +13,7 @@ camera motion estimation, and visual odometry.
 - [x] Raw brute-force descriptor matching
 - [x] Cross-check matching
 - [x] KNN ratio-test matching
-- [ ] Geometric verification
+- [x] Geometric verification
 - [ ] Essential matrix estimation
 - [ ] Relative pose recovery
 
@@ -43,4 +43,8 @@ Dataset: `data/img1.jpg` and `data/img2.jpg`
 
 The displayed top-100 matches showed no obvious visual outliers.
 Visual inspection alone does not prove geometric correctness.
+
+| Ratio-test matches | RANSAC inliers | Inlier rate | Threshold |
+|---:|---:|---:|---:|
+| 205 | 124 | 60.49% | 1.0 px |
 

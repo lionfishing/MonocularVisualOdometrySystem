@@ -8,8 +8,8 @@ add_executable(project_3_vo
     src/main.cpp 
     src/feature.cpp 
     src/matching.cpp 
-    "src/geometry.cpp" 
-    "include/geometry.h")
+    src/geometry.cpp 
+)
 
 target_compile_features(project_3_vo PRIVATE cxx_std_17)
 

@@ -13,6 +13,8 @@
 
 constexpr float kRatioThreshold = 0.75F;
 constexpr int kMaxFeatures = 1000;
+constexpr double kFundamentalRansacThreshold = 1.0;
+constexpr double kRansacConfidence = 0.99;
 
 int main(int argc, char* argv[])
 {
@@ -92,24 +94,59 @@ int main(int argc, char* argv[])
         std::cerr << "Point correspondence sizes do not match.\n";
         return 7;
     }
+    //The normalized eight-point algorithm requires at least eight correspondences.
     if (correspondences.points1.size() < 8)
     {
         std::cerr
             << "Not enough point correspondences "
-            << "for fundamental matrix estimation.\n";//minmum of four parts of points
+            << "for fundamental matrix estimation.\n";
         return 8;
     }
-    std::cout << "Point correspondences: "
-        << correspondences.points1.size() << '\n';
+    const vo::FundamentalMatrixResult fundamental_result =
+        vo::estimateFundamentalMatrixRansac(
+            correspondences,
+            ratio_matches,
+            kFundamentalRansacThreshold,
+            kRansacConfidence
+        );
 
+    if (fundamental_result.fundamental_matrix.empty())
+    {
+        std::cerr << "Failed to estimate the fundamental matrix.\n";
+        return 9;
+    }
+    const double inlier_ratio =
+        static_cast<double>(
+            fundamental_result.inlier_matches.size()
+            )
+        / static_cast<double>(ratio_matches.size());
+    std::cout << "Fundamental matrix:\n"
+        << fundamental_result.fundamental_matrix
+        << '\n';
+    std::cout << "RANSAC inliers: "
+        << fundamental_result.inlier_matches.size()
+        << " / " << ratio_matches.size()
+        << '\n';
+    std::cout << "RANSAC inlier ratio: "
+        << 100.0 * inlier_ratio
+        << "%\n";
     const std::size_t ratio_count_to_draw =
         std::min<std::size_t>(
             100,
             ratio_matches.size()
         );
+    const std::size_t ransac_count_to_draw =
+        std::min<std::size_t>(
+            100,
+            fundamental_result.inlier_matches.size()
+        );
     const std::vector<cv::DMatch> selected_ratio_matches(
         ratio_matches.begin(),
         ratio_matches.begin() + ratio_count_to_draw
+    );
+    const std::vector<cv::DMatch> selected_ransac_matches(
+        fundamental_result.inlier_matches.begin(),
+        fundamental_result.inlier_matches.begin() + ransac_count_to_draw
     );
 
     cv::Mat ratio_view;
@@ -125,10 +162,28 @@ int main(int argc, char* argv[])
         std::vector<char>(),
         cv::DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS
     );
+    cv::Mat inlier_view;
+    cv::drawMatches(
+        image1,
+        features1.keypoints,
+        image2,
+        features2.keypoints,
+        selected_ransac_matches,
+        inlier_view,
+        cv::Scalar::all(-1),
+        cv::Scalar::all(-1),
+        std::vector<char>(),
+        cv::DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS
+    );
 
 
-
-    cv::imshow("Ratio-test ORB matches", ratio_view);
+    cv::imshow(
+        "Ratio-test ORB matches", 
+        ratio_view);
+    cv::imshow(
+        "Fundamental matrix RANSAC inliers",
+        inlier_view
+    );
 
     cv::waitKey(0);
     return 0;
