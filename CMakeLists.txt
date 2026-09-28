@@ -4,7 +4,7 @@ project(project_3_vo LANGUAGES CXX)
 
 find_package(OpenCV CONFIG REQUIRED)
 
-add_executable(project_3_vo src/main.cpp)
+add_executable(project_3_vo src/main.cpp src/feature.cpp)
 
 target_compile_features(project_3_vo PRIVATE cxx_std_17)
 
@@ -15,6 +15,10 @@ if(MSVC)
     )
 endif()
 
-target_include_directories(project_3_vo PRIVATE ${OpenCV_INCLUDE_DIRS})
+target_include_directories(project_3_vo 
+    PRIVATE 
+    include
+    ${OpenCV_INCLUDE_DIRS}
+)
 
 target_link_libraries(project_3_vo PRIVATE ${OpenCV_LIBS})

@@ -7,7 +7,10 @@
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/features2d.hpp>
 
+#include "feature.h"
+
 constexpr float kRatioThreshold = 0.75F;
+constexpr int kMaxFeatures = 1000;
 
 int main(int argc, char* argv[])
 {
@@ -31,19 +34,19 @@ int main(int argc, char* argv[])
         std::cerr << "Failed to load image: " << argv[2] << '\n';
         return 3;
     }
-    const cv::Ptr<cv::ORB> orb = cv::ORB::create(1000);
-    std::vector<cv::KeyPoint> keypoints1;
-    std::vector<cv::KeyPoint> keypoints2;
-    cv::Mat descriptors1;
-    cv::Mat descriptors2;
-    orb->detectAndCompute(image1, cv::noArray(), keypoints1, descriptors1);
-    orb->detectAndCompute(image2, cv::noArray(), keypoints2, descriptors2);
-    if (descriptors1.empty())
+
+    const vo::FeatureSet features1 =
+        vo::extractOrbFeatures(image1, kMaxFeatures);
+    const vo::FeatureSet features2 =
+        vo::extractOrbFeatures(image2, kMaxFeatures);
+ 
+
+    if (features1.descriptors.empty())
     {
         std::cerr << "Failed to compute descriptors for image 1.\n";
         return 4;
     }
-    if (descriptors2.empty())
+    if (features2.descriptors.empty())
     {
         std::cerr << "Failed to compute descriptors for image 2.\n";
         return 5;
@@ -63,18 +66,18 @@ int main(int argc, char* argv[])
     std::vector<std::vector<cv::DMatch>> knn_matches;
 
     matcher.match(
-        descriptors1,
-        descriptors2,
+        features1.descriptors,
+        features2.descriptors,
         matches
     );
     cross_check_matcher.match(
-        descriptors1,
-        descriptors2,
+        features1.descriptors,
+        features2.descriptors,
         cross_check_matches
     );
     matcher.knnMatch(
-        descriptors1,
-        descriptors2,
+        features1.descriptors,
+        features2.descriptors,
         knn_matches,
         2
     );
@@ -202,9 +205,9 @@ int main(int argc, char* argv[])
     cv::Mat matches_view;
     cv::drawMatches(
         image1,
-        keypoints1,
+        features1.keypoints,
         image2,
-        keypoints2,
+        features2.keypoints,
         selected_matches,
         matches_view,
         cv::Scalar::all(-1),
@@ -215,9 +218,9 @@ int main(int argc, char* argv[])
     cv::Mat cross_check_view;
     cv::drawMatches(
         image1,
-        keypoints1,
+        features1.keypoints,
         image2,
-        keypoints2,
+        features2.keypoints,
         selected_cross_check_matches,
         cross_check_view,
         cv::Scalar::all(-1),
@@ -229,9 +232,9 @@ int main(int argc, char* argv[])
     cv::Mat ratio_view;
     cv::drawMatches(
         image1,
-        keypoints1,
+        features1.keypoints,
         image2,
-        keypoints2,
+        features2.keypoints,
         selected_ratio_matches,
         ratio_view,
         cv::Scalar::all(-1),
