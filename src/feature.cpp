@@ -20,4 +20,4 @@ namespace vo
 
         return features;
 	}
-}
+}// namespace vo
