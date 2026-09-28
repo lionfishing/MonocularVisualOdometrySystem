@@ -4,7 +4,11 @@ project(project_3_vo LANGUAGES CXX)
 
 find_package(OpenCV CONFIG REQUIRED)
 
-add_executable(project_3_vo src/main.cpp src/feature.cpp src/matching.cpp "src/matching.cpp" "include/matching.h")
+add_executable(project_3_vo 
+    src/main.cpp 
+    src/feature.cpp 
+    src/matching.cpp 
+    )
 
 target_compile_features(project_3_vo PRIVATE cxx_std_17)
 
