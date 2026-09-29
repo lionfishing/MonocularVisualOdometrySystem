@@ -117,7 +117,7 @@ int main(int argc, char* argv[])
         kBoardColumns,
         kBoardRows
     );
-    //根据局部亮度自适应区分黑白区域 
+    //根据局部亮度自适应区分黑白区域
     //检测前对图像亮度进行归一化
     const int detection_flags =
         cv::CALIB_CB_ADAPTIVE_THRESH
@@ -210,7 +210,7 @@ int main(int argc, char* argv[])
             << image_path.filename()
             << ": "
             << corners.size()
-            << " corners\n"; 
+            << " corners\n";
 
     }
 

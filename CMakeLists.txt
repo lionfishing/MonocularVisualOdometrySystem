@@ -28,7 +28,7 @@ target_include_directories(project_3_vo
 
 target_link_libraries(project_3_vo PRIVATE ${OpenCV_LIBS})
 
-#Camera calibration tool
+# Camera calibration tool
 add_executable(camera_calibrate
     src/calibration_main.cpp
 )
