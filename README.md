@@ -50,7 +50,23 @@ Visual inspection alone does not prove geometric correctness.
 
 ### Fundamental matrix diagnostics
 
-- Determinant:
-- Singular values:
-- Smallest-to-second singular value ratio:
+- Determinant: `-1.29247e-26`
+- Singular values: `1.00002`, `1.27583e-05`, `2.96733e-22`
+- Smallest-to-second singular value ratio: `2.3258e-17`
+
+The near-zero third singular value confirms that the fundamental
+matrix has numerical rank 2.
+
+### Sampson error experiment
+
+The reported values are square-root Sampson errors and can be
+interpreted approximately in pixels.
+
+| Match set | Count | Mean | Median | Maximum |
+|---|---:|---:|---:|---:|
+| Ratio-test matches | 205 | 4.02044 | 0.481017 | 552.436 |
+| RANSAC inliers | 124 | 0.270322 | 0.268484 | 0.69123 |
+
+RANSAC removed matches that were inconsistent with the estimated
+two-view epipolar geometry.
 

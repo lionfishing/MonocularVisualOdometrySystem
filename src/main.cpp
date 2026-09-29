@@ -3,7 +3,6 @@
 #include <vector>
 
 #include <opencv2/core.hpp>
-#include <opencv2/highgui.hpp>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/features2d.hpp>
 
@@ -68,10 +67,6 @@ int main(int argc, char* argv[])
         std::cerr << "No ratio-test matches were found.\n";
         return 6;
     }
-
-    std::cout << "Ratio-test matches: "
-        << ratio_matches.size() << '\n';
-
     std::sort(
         ratio_matches.begin(),
         ratio_matches.end(),
@@ -80,14 +75,12 @@ int main(int argc, char* argv[])
             return lhs.distance < rhs.distance;
         }
     );
-
     const vo::PointCorrespondences correspondences =
         vo::buildPointCorrespondences(
             features1.keypoints,
             features2.keypoints,
             ratio_matches
         );
-
     if (correspondences.points1.size()
         != correspondences.points2.size())
     {
@@ -102,6 +95,7 @@ int main(int argc, char* argv[])
             << "for fundamental matrix estimation.\n";
         return 8;
     }
+
     const vo::FundamentalMatrixResult fundamental_result =
         vo::estimateFundamentalMatrixRansac(
             correspondences,
@@ -109,103 +103,45 @@ int main(int argc, char* argv[])
             kFundamentalRansacThreshold,
             kRansacConfidence
         );
-
     if (fundamental_result.fundamental_matrix.empty())
     {
         std::cerr << "Failed to estimate the fundamental matrix.\n";
         return 9;
     }
-    const double inlier_ratio =
-        static_cast<double>(
-            fundamental_result.inlier_matches.size()
-            )
-        / static_cast<double>(ratio_matches.size());
-    std::cout << "Fundamental matrix:\n"
-        << fundamental_result.fundamental_matrix
-        << '\n';
-    std::cout << "RANSAC inliers: "
-        << fundamental_result.inlier_matches.size()
-        << " / " << ratio_matches.size()
-        << '\n';
-    std::cout << "RANSAC inlier ratio: "
-        << 100.0 * inlier_ratio
-        << "%\n";
-    const std::size_t ratio_count_to_draw =
-        std::min<std::size_t>(
-            100,
-            ratio_matches.size()
+    const vo::PointCorrespondences inlier_correspondences =
+        vo::buildPointCorrespondences(
+            features1.keypoints,
+            features2.keypoints,
+            fundamental_result.inlier_matches
         );
-    const std::size_t ransac_count_to_draw =
-        std::min<std::size_t>(
-            100,
-            fundamental_result.inlier_matches.size()
+
+    const vo::SampsonErrorStatistics all_statistics =
+        vo::computeSampsonErrorStatistics(
+            fundamental_result.fundamental_matrix,
+            correspondences
         );
-    const std::vector<cv::DMatch> selected_ratio_matches(
-        ratio_matches.begin(),
-        ratio_matches.begin() + ratio_count_to_draw
-    );
-    const std::vector<cv::DMatch> selected_ransac_matches(
-        fundamental_result.inlier_matches.begin(),
-        fundamental_result.inlier_matches.begin() + ransac_count_to_draw
-    );
-    const vo::FundamentalMatrixDiagnostics diagnostics =
-        vo::analyzeFundamentalMatrix(
-            fundamental_result.fundamental_matrix
+    const vo::SampsonErrorStatistics inlier_statistics =
+        vo::computeSampsonErrorStatistics(
+            fundamental_result.fundamental_matrix,
+            inlier_correspondences
         );
-    if (!diagnostics.valid)
+    if (!all_statistics.valid || !inlier_statistics.valid)
     {
-        std::cerr
-            << "Failed to analyze the fundamental matrix.\n";
+        std::cerr << "Failed to compute Sampson error statistics.\n";
         return 10;
     }
+    std::cout
+        << "All matches Sampson error:\n"
+        << "  Count: " << all_statistics.count << '\n'
+        << "  Mean: " << all_statistics.mean << '\n'
+        << "  Median: " << all_statistics.median << '\n'
+        << "  Maximum: " << all_statistics.maximum << '\n';
+    std::cout
+        << "RANSAC inliers Sampson error:\n"
+        << "  Count: " << inlier_statistics.count << '\n'
+        << "  Mean: " << inlier_statistics.mean << '\n'
+        << "  Median: " << inlier_statistics.median << '\n'
+        << "  Maximum: " << inlier_statistics.maximum << '\n';
 
-    std::cout << "Fundamental matrix determinant: "
-        << diagnostics.determinant
-        << '\n';
-
-    std::cout << "Fundamental matrix singular values: "
-        << diagnostics.singular_values[0] << ", "
-        << diagnostics.singular_values[1] << ", "
-        << diagnostics.singular_values[2] << '\n';
-
-    std::cout << "Smallest-to-second singular value ratio: "
-        << diagnostics.smallest_to_second_ratio
-        << '\n';
-
-    /*cv::Mat ratio_view;
-    cv::drawMatches(
-        image1,
-        features1.keypoints,
-        image2,
-        features2.keypoints,
-        selected_ratio_matches,
-        ratio_view,
-        cv::Scalar::all(-1),
-        cv::Scalar::all(-1),
-        std::vector<char>(),
-        cv::DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS
-    );
-    cv::Mat inlier_view;
-    cv::drawMatches(
-        image1,
-        features1.keypoints,
-        image2,
-        features2.keypoints,
-        selected_ransac_matches,
-        inlier_view,
-        cv::Scalar::all(-1),
-        cv::Scalar::all(-1),
-        std::vector<char>(),
-        cv::DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS
-    );
-    cv::imshow(
-        "Ratio-test ORB matches", 
-        ratio_view);
-    cv::imshow(
-        "Fundamental matrix RANSAC inliers",
-        inlier_view
-    );*/
-
-    cv::waitKey(0);
     return 0;
 }
