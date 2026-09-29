@@ -17,6 +17,13 @@ struct FundamentalMatrixResult
 	cv::Mat fundamental_matrix;
 	std::vector<cv::DMatch> inlier_matches;
 };
+struct FundamentalMatrixDiagnostics
+{
+	bool valid = false;
+	double determinant = 0.0;
+	cv::Vec3d singular_values{ 0.0, 0.0, 0.0 };
+	double smallest_to_second_ratio = 0.0;
+};
 
 PointCorrespondences buildPointCorrespondences(
 	const std::vector<cv::KeyPoint>& keypoints1,
@@ -28,6 +35,9 @@ FundamentalMatrixResult estimateFundamentalMatrixRansac(
 	const std::vector<cv::DMatch>& matches,
 	double ransac_threshold,
 	double confidence
+);
+FundamentalMatrixDiagnostics analyzeFundamentalMatrix(
+	const cv::Mat& fundamental_matrix
 );
 
 }		// namespace vo

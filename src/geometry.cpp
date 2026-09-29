@@ -62,4 +62,50 @@ FundamentalMatrixResult estimateFundamentalMatrixRansac(
 	}
 	return result;
 }
-}    // namespace vo
+FundamentalMatrixDiagnostics analyzeFundamentalMatrix(
+	const cv::Mat& fundamental_matrix)
+{
+	FundamentalMatrixDiagnostics diagnostics;
+	//fundamental must three rows and three cows 
+	if (fundamental_matrix.empty()
+		|| fundamental_matrix.rows != 3
+		|| fundamental_matrix.cols != 3
+		|| fundamental_matrix.channels() != 1)
+	{
+		return diagnostics;
+	}
+	cv::Mat matrix_64f;
+	//转换到64精度
+	fundamental_matrix.convertTo(
+		matrix_64f,
+		CV_64F);
+	cv::Mat singular_values;
+	cv::SVD::compute(
+		matrix_64f,
+		singular_values
+	);
+	
+	if (singular_values.total() != 3)
+	{
+		return diagnostics;
+	}
+	//计算行列式
+	diagnostics.determinant =
+		cv::determinant(matrix_64f);
+	for (int i = 0; i < 3; i++)
+	{
+		diagnostics.singular_values[i] =
+			singular_values.at<double>(i, 0);
+	}
+	//进行除法要确保非零
+	if (diagnostics.singular_values[1] > 0.0)
+	{
+		diagnostics.smallest_to_second_ratio =
+			diagnostics.singular_values[2]
+			/ diagnostics.singular_values[1];
+	}
+	diagnostics.valid = true;
+	return diagnostics;
+}
+
+}		// namespace vo

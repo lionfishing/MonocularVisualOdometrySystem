@@ -48,3 +48,9 @@ Visual inspection alone does not prove geometric correctness.
 |---:|---:|---:|---:|
 | 205 | 124 | 60.49% | 1.0 px |
 
+### Fundamental matrix diagnostics
+
+- Determinant:
+- Singular values:
+- Smallest-to-second singular value ratio:
+

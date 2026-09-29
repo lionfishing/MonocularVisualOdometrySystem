@@ -148,8 +148,31 @@ int main(int argc, char* argv[])
         fundamental_result.inlier_matches.begin(),
         fundamental_result.inlier_matches.begin() + ransac_count_to_draw
     );
+    const vo::FundamentalMatrixDiagnostics diagnostics =
+        vo::analyzeFundamentalMatrix(
+            fundamental_result.fundamental_matrix
+        );
+    if (!diagnostics.valid)
+    {
+        std::cerr
+            << "Failed to analyze the fundamental matrix.\n";
+        return 10;
+    }
 
-    cv::Mat ratio_view;
+    std::cout << "Fundamental matrix determinant: "
+        << diagnostics.determinant
+        << '\n';
+
+    std::cout << "Fundamental matrix singular values: "
+        << diagnostics.singular_values[0] << ", "
+        << diagnostics.singular_values[1] << ", "
+        << diagnostics.singular_values[2] << '\n';
+
+    std::cout << "Smallest-to-second singular value ratio: "
+        << diagnostics.smallest_to_second_ratio
+        << '\n';
+
+    /*cv::Mat ratio_view;
     cv::drawMatches(
         image1,
         features1.keypoints,
@@ -175,15 +198,13 @@ int main(int argc, char* argv[])
         std::vector<char>(),
         cv::DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS
     );
-
-
     cv::imshow(
         "Ratio-test ORB matches", 
         ratio_view);
     cv::imshow(
         "Fundamental matrix RANSAC inliers",
         inlier_view
-    );
+    );*/
 
     cv::waitKey(0);
     return 0;
