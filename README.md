@@ -14,6 +14,11 @@ camera motion estimation, and visual odometry.
 - [x] Cross-check matching
 - [x] KNN ratio-test matching
 - [x] Geometric verification
+- [x] Camera calibration image validation
+- [x] Chessboard corner detection
+- [x] Initial camera intrinsic calibration
+- [ ] Per-view calibration error analysis
+- [ ] Calibration parameter export
 - [ ] Essential matrix estimation
 - [ ] Relative pose recovery
 
@@ -48,6 +53,35 @@ Visual inspection alone does not prove geometric correctness.
 |---:|---:|---:|---:|
 | 205 | 124 | 60.49% | 1.0 px |
 
+## Camera calibration experiment
+
+The current calibration result is "preliminary" and has not yet been
+filtered using per-view reprojection errors.
+
+- Device: iPhone 13
+- Lens: rear 1x wide camera
+- Image size: `4032 x 3024`
+- Chessboard inner corners: `9 x 6`
+- Square size: `23.5 mm`
+- Captured images: `19`
+- Accepted images: `18`
+- Rejected images: `1`
+- RMS reprojection error: `1.52792 px`
+
+Camera matrix:
+
+```text
+[3158.447972955243, 0, 2031.446013583559;
+ 0, 3146.700044318764, 1539.971050113009;
+ 0, 0, 1]
+ Distortion coefficients [k1, k2, p1, p2, k3]:
+ [0.1422258810211766,
+ -0.6088966037280547,
+ 0.004046391250896971,
+ 0.0002083226523648999,
+ 0.9824825294254116]
+ ```
+ 
 ### Fundamental matrix diagnostics
 
 - Determinant: `-1.29247e-26`
@@ -70,3 +104,11 @@ interpreted approximately in pixels.
 RANSAC removed matches that were inconsistent with the estimated
 two-view epipolar geometry.
 
+### Camera calibration
+
+Run the calibration tool with a directory containing calibration
+images:
+
+```powershell
+.\out\build\local-debug\camera_calibrate.exe .\data\calibration
+```
