@@ -17,7 +17,7 @@ camera motion estimation, and visual odometry.
 - [x] Camera calibration image validation
 - [x] Chessboard corner detection
 - [x] Initial camera intrinsic calibration
-- [ ] Per-view calibration error analysis
+- [x] Per-view calibration error analysis
 - [ ] Calibration parameter export
 - [ ] Essential matrix estimation
 - [ ] Relative pose recovery
@@ -53,7 +53,6 @@ Visual inspection alone does not prove geometric correctness.
 |---:|---:|---:|---:|
 | 205 | 124 | 60.49% | 1.0 px |
 
- 
 ### Fundamental matrix diagnostics
 
 - Determinant: `-1.29247e-26`
@@ -78,36 +77,50 @@ two-view epipolar geometry.
 
 ## Camera calibration experiment
 
-The current calibration result is "preliminary" and has not yet been
-filtered using per-view reprojection errors.
-
 - Device: iPhone 13
 - Lens: rear 1x wide camera
 - Image size: `4032 x 3024`
 - Chessboard inner corners: `9 x 6`
 - Square size: `23.5 mm`
 - Captured images: `19`
-- Accepted images: `18`
-- Rejected images: `1`
-- RMS reprojection error: `1.52792 px`
+- Final calibration images: `17`
+- RMS reprojection error: `1.23732 px`
+- Verified RMS reprojection error: `1.23733 px`
+
+Two images were excluded:
+
+- `calib_019.JPG`: chessboard corners were not detected.
+- `calib_014.JPG`: per-view RMS error was `3.86794 px`, making it a clear outlier.
+
+Removing `calib_014.JPG` reduced the overall RMS error from
+`1.52792 px` to `1.23732 px`, while the estimated focal lengths
+changed by only about `0.05%`.
 
 Camera matrix:
 
 ```text
-[3158.447972955243, 0, 2031.446013583559;
- 0, 3146.700044318764, 1539.971050113009;
+[3160.117974822863, 0, 2022.709880446517;
+ 0, 3148.400858131528, 1524.233970948727;
  0, 0, 1]
- ```
+```
 
- Distortion coefficients `[k1, k2, p1, p2, k3]`:
+Distortion coefficients `[k1, k2, p1, p2, k3]`:
 
-  ```text
- [0.1422258810211766,
- -0.6088966037280547,
- 0.004046391250896971,
- 0.0002083226523648999,
- 0.9824825294254116]
- ```
+```text
+[0.1361488370746569,
+ -0.5742277343236896,
+ 0.001449839819557136,
+ -0.0002386635394434429,
+ 0.9229426820254659]
+```
+
+### Per-view reprojection error analysis
+
+The final per-view RMS errors ranged from `0.624462 px` to
+`2.17681 px`. The independently computed overall RMS differed from
+the value returned by `cv::calibrateCamera` by only
+`1.65706e-06 px`, confirming that the reprojection error calculation
+is consistent.
 
 ### Camera calibration
 
