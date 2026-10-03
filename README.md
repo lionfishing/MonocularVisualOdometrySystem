@@ -18,7 +18,7 @@ camera motion estimation, and visual odometry.
 - [x] Chessboard corner detection
 - [x] Initial camera intrinsic calibration
 - [x] Per-view calibration error analysis
-- [ ] Calibration parameter export
+- [x] Calibration parameter export
 - [ ] Essential matrix estimation
 - [ ] Relative pose recovery
 
@@ -128,5 +128,11 @@ Run the calibration tool with a directory containing calibration
 images:
 
 ```powershell
-.\out\build\local-debug\camera_calibrate.exe .\data\calibration
+.\out\build\local-debug\camera_calibrate.exe `
+    .\data\calibration `
+    .\config\iphone13_camera.yaml
 ```
+
+The calibration tool exports the image size, camera matrix,
+distortion coefficients, reprojection RMS error, and chessboard
+metadata in OpenCV YAML format.

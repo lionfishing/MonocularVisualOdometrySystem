@@ -113,6 +113,53 @@ ReprojectionErrorReport computeReprojectionErrors(
 	return report;
 }
 
+bool saveCalibration(
+	const fs::path& output_file,
+	const cv::Size& image_size,
+	const cv::Mat& camera_matrix,
+	const cv::Mat& distortion_coefficients,
+	double rms_reprojection_error,
+	std::size_t calibration_image_count)
+{
+	cv::FileStorage storage(
+		output_file.string(),
+		cv::FileStorage::WRITE
+	);
+
+	if (!storage.isOpened())
+	{
+		return false;
+	}
+
+	storage << "camera_model" << "pinhole";
+	storage << "distortion_model" << "opencv";
+
+	storage << "image_width" << image_size.width;
+	storage << "image_height" << image_size.height;
+
+	storage << "camera_matrix" << camera_matrix;
+	storage
+		<< "distortion_coefficients"
+		<< distortion_coefficients;
+
+	storage
+		<< "rms_reprojection_error"
+		<< rms_reprojection_error;
+
+	storage
+		<< "calibration_image_count"
+		<< static_cast<int>(calibration_image_count);
+
+	storage << "board_columns" << kBoardColumns;
+	storage << "board_rows" << kBoardRows;
+	storage
+		<< "square_size_millimeters"
+		<< kSquareSizeMillimeters;
+
+	storage.release();
+	return true;
+}
+
 //生成棋盘格坐标
 std::vector<cv::Point3f> createBoardObjectPoints(
 	const cv::Size& board_size,
@@ -164,15 +211,17 @@ bool isSupportedImageFile(const fs::path& path)
 
 int main(int argc, char* argv[])
 {
-	if (argc != 2)
+	if (argc != 3)
 	{
 		std::cerr
 			<< "Usage: camera_calibrate "
-			<< "<calibration_image_directory>\n";
+			<< "<calibration_image_directory> "
+			<< "<output_file>\n";
 		return 1;
 	}
 	//转为路径对象
 	const fs::path calibration_directory(argv[1]);
+	const fs::path output_file(argv[2]);
 	//验证路径是否存在/路径是否为目录
 	if (!fs::exists(calibration_directory)
 		|| !fs::is_directory(calibration_directory))
@@ -297,6 +346,7 @@ int main(int argc, char* argv[])
 			)
 		);
 
+
 		image_points.push_back(corners);
 		accepted_image_paths.push_back(image_path);
 
@@ -306,15 +356,11 @@ int main(int argc, char* argv[])
 			<< ": "
 			<< corners.size()
 			<< " corners\n";
-
 	}
-
 	const std::size_t accepted_count =
 		image_points.size();
-
 	const std::size_t rejected_count =
 		image_paths.size() - accepted_count;
-
 	std::cout
 		<< "\nCalibration image validation summary:\n"
 		<< "  Total: " << image_paths.size() << '\n'
@@ -382,6 +428,26 @@ int main(int argc, char* argv[])
 			<< "Failed to compute reprojection errors.\n";
 		return 6;
 	}
+
+	if (!saveCalibration(
+		output_file,
+		expected_image_size,
+		camera_matrix,
+		distortion_coefficients,
+		rms_reprojection_error,
+		accepted_count))
+	{
+		std::cerr
+			<< "Failed to save calibration file: "
+			<< output_file
+			<< '\n';
+		return 7;
+	}
+
+	std::cout
+		<< "Calibration parameters saved to: "
+		<< output_file
+		<< '\n';
 
 	std::cout
 		<< "\nCalibration result:\n"
