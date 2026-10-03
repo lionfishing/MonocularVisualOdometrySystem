@@ -19,6 +19,7 @@ camera motion estimation, and visual odometry.
 - [x] Initial camera intrinsic calibration
 - [x] Per-view calibration error analysis
 - [x] Calibration parameter export
+- [x] Calibration parameter loading
 - [ ] Essential matrix estimation
 - [ ] Relative pose recovery
 
@@ -33,7 +34,10 @@ camera motion estimation, and visual odometry.
 Pass two consecutive image frames to the executable:
 
 ```powershell
-out/build/local-debug/project_3_vo.exe data/img1.jpg data/img2.jpg
+out/build/local-debug/project_3_vo.exe `
+    data/img1.jpg `
+    data/img2.jpg `
+    config/iphone13_camera.yaml
 ```
 
 ## Matching experiment
