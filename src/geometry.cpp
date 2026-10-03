@@ -155,6 +155,79 @@ namespace vo
 		}
 		return result;
 	}
+	RelativePoseResult recoverRelativePose(
+		const EssentialMatrixResult& essential_result,
+		const PointCorrespondences& undistorted_correspondences,
+		const std::vector<cv::DMatch>& matches,
+		const cv::Mat& camera_matrix)
+	{
+		RelativePoseResult result;
+
+		if (essential_result.essential_matrix.empty()
+			|| essential_result.essential_matrix.rows != 3
+			|| essential_result.essential_matrix.cols != 3
+			|| essential_result.inlier_mask.size()
+			!= matches.size()
+			|| undistorted_correspondences.points1.size()
+			!= matches.size()
+			|| undistorted_correspondences.points2.size()
+			!= matches.size()
+			|| camera_matrix.empty()
+			|| camera_matrix.rows != 3
+			|| camera_matrix.cols != 3)
+		{
+			return result;
+		}
+		//会修改结果，提前复制一份
+		result.inlier_mask =
+			essential_result.inlier_mask;
+		const int recovered_point_count =
+			cv::recoverPose(
+				essential_result.essential_matrix,
+				undistorted_correspondences.points1,
+				undistorted_correspondences.points2,
+				camera_matrix,
+				result.rotation,
+				result.translation,
+				result.inlier_mask
+			);
+		if (recovered_point_count <= 0
+			|| result.rotation.rows != 3
+			|| result.rotation.cols != 3
+			|| result.translation.total() != 3
+			|| result.inlier_mask.size() != matches.size())
+		{
+			return RelativePoseResult{};
+		}
+		result.inlier_matches.reserve(
+			static_cast<std::size_t>(
+				recovered_point_count
+				)
+		);
+		for (std::size_t index = 0;
+			index < matches.size();
+			++index)
+		{
+			if (result.inlier_mask[index] != 0)
+			{
+				result.inlier_matches.push_back(
+					matches[index]
+				);
+			}
+		}
+		if (result.inlier_matches.size()
+			!= static_cast<std::size_t>(
+				recovered_point_count
+				))
+		{
+			return RelativePoseResult{};
+		}
+		result.cheirality_inlier_count =
+			result.inlier_matches.size();
+
+		result.valid = true;
+		return result;
+	}
 	FundamentalMatrixDiagnostics analyzeFundamentalMatrix(
 		const cv::Mat& fundamental_matrix)
 	{

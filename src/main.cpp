@@ -213,6 +213,21 @@ int main(int argc, char* argv[])
 			<< "Failed to estimate the essential matrix.\n";
 		return 15;
 	}
+	const vo::RelativePoseResult pose_result =
+		vo::recoverRelativePose(
+			essential_result,
+			undistorted_correspondences,
+			ratio_matches,
+			calibration.camera_matrix
+		);
+
+	if (!pose_result.valid)
+	{
+		std::cerr
+			<< "Failed to recover relative camera pose.\n";
+		return 16;
+	}
+
 
 	const vo::PointCorrespondences inlier_correspondences =
 		vo::buildPointCorrespondences(
@@ -251,6 +266,23 @@ int main(int argc, char* argv[])
 		<< "Essential matrix RANSAC inlier rate: "
 		<< essential_inlier_rate
 		<< "%\n";
+
+	std::cout
+		<< "Recovered relative pose:\n"
+		<< "Rotation matrix:\n"
+		<< pose_result.rotation
+		<< '\n'
+		<< "Translation direction:\n"
+		<< pose_result.translation
+		<< '\n'
+		<< "Translation norm: "
+		<< cv::norm(pose_result.translation)
+		<< '\n'
+		<< "Cheirality inliers: "
+		<< pose_result.cheirality_inlier_count
+		<< " / "
+		<< essential_result.inlier_matches.size()
+		<< '\n';
 
 	if (!all_statistics.valid || !inlier_statistics.valid)
 	{

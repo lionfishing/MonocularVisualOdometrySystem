@@ -24,6 +24,19 @@ namespace vo
 		std::vector<unsigned char> inlier_mask;
 		std::vector<cv::DMatch> inlier_matches;
 	};
+	struct RelativePoseResult
+	{
+		bool valid = false;
+
+		cv::Mat rotation;
+		cv::Mat translation;
+
+		//同时满足本质矩阵约束和正深度约束的匹配
+		std::vector<unsigned char> inlier_mask;
+		std::vector<cv::DMatch> inlier_matches;
+
+		std::size_t cheirality_inlier_count = 0;
+	};
 	struct FundamentalMatrixDiagnostics
 	{
 		bool valid = false;
@@ -56,6 +69,12 @@ namespace vo
 		const cv::Mat& camera_matrix,
 		double ransac_threshold,
 		double confidence
+	);
+	RelativePoseResult recoverRelativePose(
+		const EssentialMatrixResult& essential_result,
+		const PointCorrespondences& undistorted_correspondences,
+		const std::vector<cv::DMatch>& matches,
+		const cv::Mat& camera_matrix
 	);
 	FundamentalMatrixResult estimateFundamentalMatrixRansac(
 		const PointCorrespondences& correspondences,

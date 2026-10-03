@@ -21,7 +21,7 @@ camera motion estimation, and visual odometry.
 - [x] Calibration parameter export
 - [x] Calibration parameter loading
 - [x] Essential matrix estimation
-- [ ] Relative pose recovery
+- [x] Relative pose recovery
 
 ## Requirements
 
