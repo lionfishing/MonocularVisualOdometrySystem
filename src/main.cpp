@@ -41,6 +41,16 @@ int main(int argc, char* argv[])
 		std::cerr << "Failed to load image: " << argv[2] << '\n';
 		return 3;
 	}
+	if (image1.size() != image2.size())
+	{
+		std::cerr
+			<< "Input image sizes do not match:\n"
+			<< "  Image 1: "
+			<< image1.cols << " x " << image1.rows << '\n'
+			<< "  Image 2: "
+			<< image2.cols << " x " << image2.rows << '\n';
+		return 12;
+	}
 	//相机内参读入
 	vo::CameraCalibration calibration;
 	if (!vo::loadCameraCalibration(
@@ -67,6 +77,19 @@ int main(int argc, char* argv[])
 		<< "  Distortion coefficients:\n"
 		<< calibration.distortion_coefficients
 		<< '\n';
+	if (image1.size() != calibration.image_size)
+	{
+		std::cerr
+			<< "Input image size does not match calibration:\n"
+			<< "  Input: "
+			<< image1.cols << " x " << image1.rows << '\n'
+			<< "  Calibration: "
+			<< calibration.image_size.width
+			<< " x "
+			<< calibration.image_size.height
+			<< '\n';
+		return 13;
+	}
 
 	const vo::FeatureSet features1 =
 		vo::extractOrbFeatures(image1, kMaxFeatures);
