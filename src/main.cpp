@@ -14,6 +14,7 @@
 constexpr float kRatioThreshold = 0.75F;
 constexpr int kMaxFeatures = 1000;
 constexpr double kFundamentalRansacThreshold = 1.0;
+constexpr double kEssentialRansacThreshold = 1.0;
 constexpr double kRansacConfidence = 0.99;
 
 int main(int argc, char* argv[])
@@ -198,6 +199,21 @@ int main(int argc, char* argv[])
 		std::cerr << "Failed to estimate the fundamental matrix.\n";
 		return 9;
 	}
+	const vo::EssentialMatrixResult essential_result =
+		vo::estimateEssentialMatrixRansac(
+			undistorted_correspondences,
+			ratio_matches,
+			calibration.camera_matrix,
+			kEssentialRansacThreshold,
+			kRansacConfidence
+		);
+	if (essential_result.essential_matrix.empty())
+	{
+		std::cerr
+			<< "Failed to estimate the essential matrix.\n";
+		return 15;
+	}
+
 	const vo::PointCorrespondences inlier_correspondences =
 		vo::buildPointCorrespondences(
 			features1.keypoints,
@@ -215,6 +231,27 @@ int main(int argc, char* argv[])
 			fundamental_result.fundamental_matrix,
 			inlier_correspondences
 		);
+
+	const double essential_inlier_rate =
+		100.0
+		* static_cast<double>(
+			essential_result.inlier_matches.size()
+			)
+		/ static_cast<double>(ratio_matches.size());
+
+	std::cout
+		<< "Essential matrix:\n"
+		<< essential_result.essential_matrix
+		<< '\n'
+		<< "Essential matrix RANSAC inliers: "
+		<< essential_result.inlier_matches.size()
+		<< " / "
+		<< ratio_matches.size()
+		<< '\n'
+		<< "Essential matrix RANSAC inlier rate: "
+		<< essential_inlier_rate
+		<< "%\n";
+
 	if (!all_statistics.valid || !inlier_statistics.valid)
 	{
 		std::cerr << "Failed to compute Sampson error statistics.\n";

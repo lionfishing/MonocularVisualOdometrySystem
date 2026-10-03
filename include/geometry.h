@@ -18,6 +18,12 @@ namespace vo
 		cv::Mat fundamental_matrix;
 		std::vector<cv::DMatch> inlier_matches;
 	};
+	struct EssentialMatrixResult
+	{
+		cv::Mat essential_matrix;
+		std::vector<unsigned char> inlier_mask;
+		std::vector<cv::DMatch> inlier_matches;
+	};
 	struct FundamentalMatrixDiagnostics
 	{
 		bool valid = false;
@@ -43,6 +49,13 @@ namespace vo
 		const PointCorrespondences& correspondences,
 		const cv::Mat& camera_matrix,
 		const cv::Mat& distortion_coefficients
+	);
+	EssentialMatrixResult estimateEssentialMatrixRansac(
+		const PointCorrespondences& undistorted_correspondences,
+		const std::vector<cv::DMatch>& matches,
+		const cv::Mat& camera_matrix,
+		double ransac_threshold,
+		double confidence
 	);
 	FundamentalMatrixResult estimateFundamentalMatrixRansac(
 		const PointCorrespondences& correspondences,

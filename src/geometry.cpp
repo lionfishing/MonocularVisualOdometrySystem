@@ -62,6 +62,58 @@ namespace vo
 		);
 		return undistorted;
 	}
+	EssentialMatrixResult estimateEssentialMatrixRansac(
+		const PointCorrespondences& undistorted_correspondences,
+		const std::vector<cv::DMatch>& matches,
+		const cv::Mat& camera_matrix,
+		double ransac_threshold,
+		double confidence)
+	{
+		EssentialMatrixResult result;
+		if (undistorted_correspondences.points1.size()
+			!= undistorted_correspondences.points2.size()
+			|| undistorted_correspondences.points1.size()
+			!= matches.size()
+			|| matches.size() < 5
+			|| camera_matrix.empty()
+			|| camera_matrix.rows != 3
+			|| camera_matrix.cols != 3)
+		{
+			return result;
+		}
+		result.essential_matrix =
+			cv::findEssentialMat(
+				undistorted_correspondences.points1,
+				undistorted_correspondences.points2,
+				camera_matrix,
+				cv::RANSAC,
+				confidence,
+				ransac_threshold,
+				result.inlier_mask
+			);
+		if (result.essential_matrix.empty()
+			|| result.essential_matrix.rows != 3
+			|| result.essential_matrix.cols != 3
+			|| result.inlier_mask.size() != matches.size())
+		{
+			result.essential_matrix.release();
+			result.inlier_mask.clear();
+			return result;
+		}
+		result.inlier_matches.reserve(matches.size());
+		for (std::size_t index = 0;
+			index < matches.size();
+			++index)
+		{
+			if (result.inlier_mask[index] != 0)
+			{
+				result.inlier_matches.push_back(
+					matches[index]
+				);
+			}
+		}
+		return result;
+	}
 	FundamentalMatrixResult estimateFundamentalMatrixRansac(
 		const PointCorrespondences& correspondences,
 		const std::vector<cv::DMatch>& matches,
