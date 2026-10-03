@@ -148,6 +148,43 @@ int main(int argc, char* argv[])
 			<< "for fundamental matrix estimation.\n";
 		return 8;
 	}
+	const vo::PointCorrespondences undistorted_correspondences =
+		vo::undistortPointCorrespondences(
+			correspondences,
+			calibration.camera_matrix,
+			calibration.distortion_coefficients
+		);
+
+	if (undistorted_correspondences.points1.size()
+		!= correspondences.points1.size()
+		|| undistorted_correspondences.points2.size()
+		!= correspondences.points2.size())
+	{
+		std::cerr
+			<< "Failed to undistort point correspondences.\n";
+		return 14;
+	}
+
+	std::cout
+		<< "Undistortion sample:\n"
+		<< "  Image 1: ("
+		<< correspondences.points1[0].x
+		<< ", "
+		<< correspondences.points1[0].y
+		<< ") -> ("
+		<< undistorted_correspondences.points1[0].x
+		<< ", "
+		<< undistorted_correspondences.points1[0].y
+		<< ")\n"
+		<< "  Image 2: ("
+		<< correspondences.points2[0].x
+		<< ", "
+		<< correspondences.points2[0].y
+		<< ") -> ("
+		<< undistorted_correspondences.points2[0].x
+		<< ", "
+		<< undistorted_correspondences.points2[0].y
+		<< ")\n";
 
 	const vo::FundamentalMatrixResult fundamental_result =
 		vo::estimateFundamentalMatrixRansac(

@@ -26,6 +26,42 @@ namespace vo
 		}
 		return correspondences;
 	}
+	//去畸变
+	PointCorrespondences undistortPointCorrespondences(
+		const PointCorrespondences& correspondences,
+		const cv::Mat& camera_matrix,
+		const cv::Mat& distortion_coefficients)
+	{
+		PointCorrespondences undistorted;
+
+		if (correspondences.points1.empty()
+			|| correspondences.points1.size()
+			!= correspondences.points2.size()
+			|| camera_matrix.empty()
+			|| camera_matrix.rows != 3
+			|| camera_matrix.cols != 3
+			|| distortion_coefficients.empty())
+		{
+			return undistorted;
+		}
+		cv::undistortPoints(
+			correspondences.points1,
+			undistorted.points1,
+			camera_matrix,
+			distortion_coefficients,
+			cv::noArray(),
+			camera_matrix
+		);
+		cv::undistortPoints(
+			correspondences.points2,
+			undistorted.points2,
+			camera_matrix,
+			distortion_coefficients,
+			cv::noArray(),
+			camera_matrix
+		);
+		return undistorted;
+	}
 	FundamentalMatrixResult estimateFundamentalMatrixRansac(
 		const PointCorrespondences& correspondences,
 		const std::vector<cv::DMatch>& matches,

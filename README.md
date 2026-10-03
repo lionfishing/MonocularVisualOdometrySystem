@@ -35,8 +35,8 @@ Pass two consecutive image frames to the executable:
 
 ```powershell
 out/build/local-debug/project_3_vo.exe `
-    data/img1.jpg `
-    data/img2.jpg `
+    data/vo_001.JPG `
+    data/vo_002.JPG `
     config/iphone13_camera.yaml
 ```
 

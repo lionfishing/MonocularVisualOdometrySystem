@@ -39,6 +39,11 @@ namespace vo
 		const std::vector<cv::KeyPoint>& keypoints2,
 		const std::vector<cv::DMatch>& matches
 	);
+	PointCorrespondences undistortPointCorrespondences(
+		const PointCorrespondences& correspondences,
+		const cv::Mat& camera_matrix,
+		const cv::Mat& distortion_coefficients
+	);
 	FundamentalMatrixResult estimateFundamentalMatrixRansac(
 		const PointCorrespondences& correspondences,
 		const std::vector<cv::DMatch>& matches,
