@@ -17,4 +17,4 @@ namespace vo
 		const cv::Mat& image,
 		int max_features
 	);
-}// namespace vo
+}  // namespace vo

@@ -55,4 +55,5 @@ namespace vo
         cv::Mat position_world_;
     };
 
-}//namespace vo
+}  //namespace vo
+
