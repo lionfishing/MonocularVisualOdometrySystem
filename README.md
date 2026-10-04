@@ -1,4 +1,4 @@
-# Project 3: Two-View Camera Motion Estimation
+# Project 3: Simplified Monocular Visual Odometry
 
 A C++ project for learning feature matching, two-view geometry,
 camera motion estimation, and visual odometry.
@@ -22,6 +22,13 @@ camera motion estimation, and visual odometry.
 - [x] Calibration parameter loading
 - [x] Essential matrix estimation
 - [x] Relative pose recovery
+- [x] Relative-pose quality gating
+- [x] Multi-frame image sequence loading
+- [x] Stateful monocular visual odometry class
+- [x] Global pose accumulation
+- [x] Rejection of unreliable frames
+- [ ] Trajectory CSV export
+- [ ] 2D trajectory visualization
 
 ## Requirements
 
@@ -31,102 +38,56 @@ camera motion estimation, and visual odometry.
 
 ## Run
 
-Pass two consecutive image frames to the executable:
+The visual odometry executable processes an ordered image directory:
 
 ```powershell
-out/build/local-debug/project_3_vo.exe `
-    data/vo_001.JPG `
-    data/vo_002.JPG `
-    config/iphone13_camera.yaml
+.\out\build\local-debug\project_3_vo.exe `
+    .\data\sequence `
+    .\config\iphone13_camera.yaml
 ```
 
-## Matching experiment
-
-Dataset: `data/img1.jpg` and `data/img2.jpg`
-
-| Method | Matches | Retention rate |
-|---|---:|---:|
-| Raw 1-NN | 1000 | 100.0% |
-| Cross-check | 385 | 38.5% |
-| KNN ratio test (`r = 0.75`) | 205 | 20.5% |
-
-The displayed top-100 matches showed no obvious visual outliers.
-Visual inspection alone does not prove geometric correctness.
-
-| Ratio-test matches | RANSAC inliers | Inlier rate | Threshold |
-|---:|---:|---:|---:|
-| 205 | 124 | 60.49% | 1.0 px |
-
-### Fundamental matrix diagnostics
-
-- Determinant: `-1.29247e-26`
-- Singular values: `1.00002`, `1.27583e-05`, `2.96733e-22`
-- Smallest-to-second singular value ratio: `2.3258e-17`
-
-The near-zero third singular value confirms that the fundamental
-matrix has numerical rank 2.
-
-### Sampson error experiment
-
-The reported values are square-root Sampson errors and can be
-interpreted approximately in pixels.
-
-| Match set | Count | Mean | Median | Maximum |
-|---|---:|---:|---:|---:|
-| Ratio-test matches | 205 | 4.02044 | 0.481017 | 552.436 |
-| RANSAC inliers | 124 | 0.270322 | 0.268484 | 0.69123 |
-
-RANSAC removed matches that were inconsistent with the estimated
-two-view epipolar geometry.
-
-## Camera calibration experiment
-
-- Device: iPhone 13
-- Lens: rear 1x wide camera
-- Image size: `4032 x 3024`
-- Chessboard inner corners: `9 x 6`
-- Square size: `23.5 mm`
-- Captured images: `19`
-- Final calibration images: `17`
-- RMS reprojection error: `1.23732 px`
-- Verified RMS reprojection error: `1.23733 px`
-
-Two images were excluded:
-
-- `calib_019.JPG`: chessboard corners were not detected.
-- `calib_014.JPG`: per-view RMS error was `3.86794 px`, making it a clear outlier.
-
-Removing `calib_014.JPG` reduced the overall RMS error from
-`1.52792 px` to `1.23732 px`, while the estimated focal lengths
-changed by only about `0.05%`.
-
-Camera matrix:
+## Simplified monocular visual odometry pipeline
 
 ```text
-[3160.117974822863, 0, 2022.709880446517;
- 0, 3148.400858131528, 1524.233970948727;
- 0, 0, 1]
+Ordered grayscale images
+    -> ORB feature extraction
+    -> KNN descriptor matching
+    -> Lowe ratio test
+    -> point undistortion
+    -> essential matrix estimation with RANSAC
+    -> relative pose recovery
+    -> cheirality quality gate
+    -> unscaled global pose accumulation
 ```
 
-Distortion coefficients `[k1, k2, p1, p2, k3]`:
+A frame is accepted only when:
 
-```text
-[0.1361488370746569,
- -0.5742277343236896,
- 0.001449839819557136,
- -0.0002386635394434429,
- 0.9229426820254659]
-```
+- The number of cheirality inliers is at least `15`.
+- The cheirality-inlier rate is at least `30%`.
 
-### Per-view reprojection error analysis
+If a frame is rejected, the last successfully accepted frame remains the
+reference frame.
 
-The final per-view RMS errors ranged from `0.624462 px` to
-`2.17681 px`. The independently computed overall RMS differed from
-the value returned by `cv::calibrateCamera` by only
-`1.65706e-06 px`, confirming that the reprojection error calculation
-is consistent.
+## Current limitations
 
-### Camera calibration
+- Translation from `recoverPose` has direction but no metric scale.
+- Every accepted translation is currently treated as having unit length.
+- The reported trajectory therefore shows only approximate shape and direction.
+- There is no bundle adjustment, keyframe management, loop closure, or scale
+  recovery.
+- A short image sequence is used as a learning experiment rather than as a
+  production-quality VO benchmark.
+
+
+## Experiment records
+
+- [Feature matching](docs/experiments/001_feature_matching.md)
+- [Camera calibration](docs/experiments/002_camera_calibration.md)
+- [Two-view geometry](docs/experiments/003_two_view_geometry.md)
+- [Monocular VO sequence](docs/experiments/004_monocular_vo_sequence.md)
+
+
+## Camera calibration tool
 
 Run the calibration tool with a directory containing calibration
 images:

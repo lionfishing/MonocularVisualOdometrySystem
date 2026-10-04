@@ -23,4 +23,4 @@ namespace vo
 		const std::string& file_path,
 		CameraCalibration& calibration
 	);
-}
+}// namespace vo

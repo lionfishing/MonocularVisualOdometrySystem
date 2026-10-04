@@ -13,4 +13,4 @@ namespace vo
         float ratio_threshold
     );
 
-}  // namespace vo
+}// namespace vo

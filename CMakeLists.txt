@@ -10,6 +10,7 @@ add_executable(project_3_vo
     src/matching.cpp 
     src/geometry.cpp 
     src/camera_calibration.cpp
+    src/visual_odometry.cpp
 )
 
 target_compile_features(project_3_vo PRIVATE cxx_std_17)

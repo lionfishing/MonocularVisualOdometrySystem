@@ -90,4 +90,4 @@ namespace vo
 		const PointCorrespondences& correspondences
 	);
 
-}		// namespace vo
+}// namespace vo
