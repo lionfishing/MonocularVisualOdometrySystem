@@ -14,8 +14,13 @@
 constexpr float kRatioThreshold = 0.75F;
 constexpr int kMaxFeatures = 1000;
 constexpr double kFundamentalRansacThreshold = 1.0;
+//几何一致性允许的误差范围
 constexpr double kEssentialRansacThreshold = 1.0;
+//RANSAC 希望达到的模型估计置信度
 constexpr double kRansacConfidence = 0.99;
+//位姿质量门控
+constexpr std::size_t kMinCheiralityInliers = 15;//数量
+constexpr double kMinCheiralityInlierRate = 0.3; //比例
 
 int main(int argc, char* argv[])
 {
@@ -65,19 +70,7 @@ int main(int argc, char* argv[])
 			<< "\n";
 		return 11;
 	}
-	std::cout
-		<< "Loaded camera calibration:\n"
-		<< "  Image size: "
-		<< calibration.image_size.width
-		<< " x "
-		<< calibration.image_size.height
-		<< '\n'
-		<< "  Camera matrix:\n"
-		<< calibration.camera_matrix
-		<< '\n'
-		<< "  Distortion coefficients:\n"
-		<< calibration.distortion_coefficients
-		<< '\n';
+
 	if (image1.size() != calibration.image_size)
 	{
 		std::cerr
@@ -166,27 +159,7 @@ int main(int argc, char* argv[])
 		return 14;
 	}
 
-	std::cout
-		<< "Undistortion sample:\n"
-		<< "  Image 1: ("
-		<< correspondences.points1[0].x
-		<< ", "
-		<< correspondences.points1[0].y
-		<< ") -> ("
-		<< undistorted_correspondences.points1[0].x
-		<< ", "
-		<< undistorted_correspondences.points1[0].y
-		<< ")\n"
-		<< "  Image 2: ("
-		<< correspondences.points2[0].x
-		<< ", "
-		<< correspondences.points2[0].y
-		<< ") -> ("
-		<< undistorted_correspondences.points2[0].x
-		<< ", "
-		<< undistorted_correspondences.points2[0].y
-		<< ")\n";
-
+					//***对照实验***//
 	const vo::FundamentalMatrixResult fundamental_result =
 		vo::estimateFundamentalMatrixRansac(
 			correspondences,
@@ -199,6 +172,29 @@ int main(int argc, char* argv[])
 		std::cerr << "Failed to estimate the fundamental matrix.\n";
 		return 9;
 	}
+	const vo::PointCorrespondences inlier_correspondences =
+		vo::buildPointCorrespondences(
+			features1.keypoints,
+			features2.keypoints,
+			fundamental_result.inlier_matches
+		);
+	//重投影误差分析 对照组 分别计算经过ransac组和普通组
+	const vo::SampsonErrorStatistics all_statistics =
+		vo::computeSampsonErrorStatistics(
+			fundamental_result.fundamental_matrix,
+			correspondences
+		);
+	const vo::SampsonErrorStatistics inlier_statistics =
+		vo::computeSampsonErrorStatistics(
+			fundamental_result.fundamental_matrix,
+			inlier_correspondences
+		);
+	if (!all_statistics.valid || !inlier_statistics.valid)
+	{
+		std::cerr << "Failed to compute Sampson error statistics.\n";
+		return 10;
+	}
+
 	const vo::EssentialMatrixResult essential_result =
 		vo::estimateEssentialMatrixRansac(
 			undistorted_correspondences,
@@ -227,80 +223,36 @@ int main(int argc, char* argv[])
 			<< "Failed to recover relative camera pose.\n";
 		return 16;
 	}
-
-
-	const vo::PointCorrespondences inlier_correspondences =
-		vo::buildPointCorrespondences(
-			features1.keypoints,
-			features2.keypoints,
-			fundamental_result.inlier_matches
-		);
-
-	const vo::SampsonErrorStatistics all_statistics =
-		vo::computeSampsonErrorStatistics(
-			fundamental_result.fundamental_matrix,
-			correspondences
-		);
-	const vo::SampsonErrorStatistics inlier_statistics =
-		vo::computeSampsonErrorStatistics(
-			fundamental_result.fundamental_matrix,
-			inlier_correspondences
-		);
-
+	// ransac 内点率
 	const double essential_inlier_rate =
 		100.0
 		* static_cast<double>(
 			essential_result.inlier_matches.size()
 			)
 		/ static_cast<double>(ratio_matches.size());
+	// 正深度内点占本质矩阵内点的比例
+	const double cheirality_inlier_rate =
+		static_cast<double>(pose_result.cheirality_inlier_count)
+		/ static_cast<double>(essential_result.inlier_matches.size());
 
-	std::cout
-		<< "Essential matrix:\n"
-		<< essential_result.essential_matrix
-		<< '\n'
-		<< "Essential matrix RANSAC inliers: "
-		<< essential_result.inlier_matches.size()
-		<< " / "
-		<< ratio_matches.size()
-		<< '\n'
-		<< "Essential matrix RANSAC inlier rate: "
-		<< essential_inlier_rate
-		<< "%\n";
-
-	std::cout
-		<< "Recovered relative pose:\n"
-		<< "Rotation matrix:\n"
-		<< pose_result.rotation
-		<< '\n'
-		<< "Translation direction:\n"
-		<< pose_result.translation
-		<< '\n'
-		<< "Translation norm: "
-		<< cv::norm(pose_result.translation)
-		<< '\n'
-		<< "Cheirality inliers: "
-		<< pose_result.cheirality_inlier_count
-		<< " / "
-		<< essential_result.inlier_matches.size()
-		<< '\n';
-
-	if (!all_statistics.valid || !inlier_statistics.valid)
+	const bool pose_is_reliable =
+		pose_result.cheirality_inlier_count >= kMinCheiralityInliers
+		&& cheirality_inlier_rate >= kMinCheiralityInlierRate;
+	if (!pose_is_reliable)
 	{
-		std::cerr << "Failed to compute Sampson error statistics.\n";
-		return 10;
+		std::cerr
+			<< "Recovered pose is unreliable:\n"
+			<< "  Cheirality inliers: "
+			<< pose_result.cheirality_inlier_count
+			<< " / "
+			<< essential_result.inlier_matches.size()
+			<< '\n'
+			<< "  Cheirality inlier rate: "
+			<< cheirality_inlier_rate * 100.0
+			<< "%\n";
+
+		return 17;
 	}
-	std::cout
-		<< "All matches Sampson error:\n"
-		<< "  Count: " << all_statistics.count << '\n'
-		<< "  Mean: " << all_statistics.mean << '\n'
-		<< "  Median: " << all_statistics.median << '\n'
-		<< "  Maximum: " << all_statistics.maximum << '\n';
-	std::cout
-		<< "RANSAC inliers Sampson error:\n"
-		<< "  Count: " << inlier_statistics.count << '\n'
-		<< "  Mean: " << inlier_statistics.mean << '\n'
-		<< "  Median: " << inlier_statistics.median << '\n'
-		<< "  Maximum: " << inlier_statistics.maximum << '\n';
 
 	return 0;
 }
