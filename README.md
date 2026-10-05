@@ -27,7 +27,7 @@ camera motion estimation, and visual odometry.
 - [x] Stateful monocular visual odometry class
 - [x] Global pose accumulation
 - [x] Rejection of unreliable frames
-- [ ] Trajectory CSV export
+- [x] Trajectory CSV export
 - [ ] 2D trajectory visualization
 
 ## Requirements
@@ -43,8 +43,20 @@ The visual odometry executable processes an ordered image directory:
 ```powershell
 .\out\build\local-debug\project_3_vo.exe `
     .\data\sequence `
-    .\config\iphone13_camera.yaml
+    .\config\iphone13_camera.yaml `
+    .\results\sequence_001.csv
 ```
+
+The CSV output contains one row per input frame:
+
+```text
+frame,status,matches,essential_inliers,cheirality_inliers,x,y,z
+```
+Possible frame states are:
+- `INIT`: initializes the visual-odometry reference frame.
+- `OK`: successfully updates the accumulated pose.
+- `SKIP`: pose estimation or quality gating failed.
+- `LOAD_FAILED`: the image could not be loaded.
 
 ## Simplified monocular visual odometry pipeline
 

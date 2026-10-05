@@ -49,3 +49,12 @@ reversal.
 
 The trajectory is unscaled. Its coordinates must not be interpreted as metres
 or centimetres.
+
+## Saved artifact
+
+The complete per-frame trajectory data is stored in:
+
+- [`results/sequence_001.csv`](../../results/sequence_001.csv)
+
+The CSV preserves higher coordinate precision than the rounded values shown in
+the table above.
