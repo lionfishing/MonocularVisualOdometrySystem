@@ -21,3 +21,6 @@ vcpkg_installed/
 
 # private data
 data/
+
+# Python virtual environment
+.venv/

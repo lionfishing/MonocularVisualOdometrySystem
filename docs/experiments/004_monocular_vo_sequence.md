@@ -58,3 +58,14 @@ The complete per-frame trajectory data is stored in:
 
 The CSV preserves higher coordinate precision than the rounded values shown in
 the table above.
+
+## Trajectory visualization
+
+The X-Z top-down trajectory is stored in:
+
+- [`results/sequence_001.png`](../../results/sequence_001.png)
+
+![Sequence 001 trajectory](../../results/sequence_001.png)
+
+The vertical plot axis uses `-World Z` so that the estimated forward direction
+is displayed upward. All coordinates remain at arbitrary monocular scale.

@@ -28,7 +28,7 @@ camera motion estimation, and visual odometry.
 - [x] Global pose accumulation
 - [x] Rejection of unreliable frames
 - [x] Trajectory CSV export
-- [ ] 2D trajectory visualization
+- [x] 2D trajectory visualization
 
 ## Requirements
 
@@ -58,6 +58,25 @@ Possible frame states are:
 - `SKIP`: pose estimation or quality gating failed.
 - `LOAD_FAILED`: the image could not be loaded.
 
+## Plot trajectory
+
+Create the Python virtual environment and install the plotting dependencies:
+
+```powershell
+python -m venv .venv
+
+.\.venv\Scripts\python.exe -m pip install `
+    -r .\requirements.txt
+```
+
+Generate the trajectory plot:
+
+```powershell
+.\.venv\Scripts\python.exe `
+    .\tools\plot_trajectory.py `
+    .\results\sequence_001.csv `
+    .\results\sequence_001.png
+```
 ## Simplified monocular visual odometry pipeline
 
 ```text
